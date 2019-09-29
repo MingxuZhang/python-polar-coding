@@ -6,4 +6,4 @@ isort
 numba
 numpy
 pycrc
-unittest-parallel
+pymongo
