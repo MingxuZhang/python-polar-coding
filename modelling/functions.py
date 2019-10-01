@@ -1,7 +1,6 @@
 import numpy as np
 
-from modelling.utils.channel import SimpleBPSKModAWGNChannel
-from modelling.utils.db import client
+from modelling.db import client
 
 
 def single_transmission(code, channel):
@@ -29,8 +28,7 @@ def single_transmission(code, channel):
     return bit_errors, word_errors
 
 
-def basic_experiment(code, channel, db_name, collection, messages=1000):
-    print('Basic experiment')
+def experiment(code, channel, db_name, collection, messages=1000):
     bit_errors = word_errors = 0
 
     for m in range(messages):
@@ -48,13 +46,3 @@ def basic_experiment(code, channel, db_name, collection, messages=1000):
     })
 
     client[db_name][collection].insert_one(data)
-
-
-def major_experiment(code, snr_range, db_name, collection, messages=100000,
-                     step_size=1000):
-    for snr in snr_range:
-        channel = SimpleBPSKModAWGNChannel(snr_db=snr)
-
-        for _ in range(0, messages, step_size):
-            basic_experiment(code, channel, db_name, collection,
-                             messages=step_size)

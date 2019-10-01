@@ -9,9 +9,9 @@ class SimpleBPSKModAWGNChannel:
         snr_db (float): Signal-to-noise ratio (dB)
 
     """
-    def __init__(self, snr_db):
+    def __init__(self, snr_db, noise_power=1.0):
         self.snr_db = snr_db
-        self.noise_power = 1.0
+        self.noise_power = noise_power
         self.symbol_energy = self._compute_symbol_energy(
             self.snr_db,
             self.noise_power,
@@ -63,9 +63,9 @@ class VerificationChannel(SimpleBPSKModAWGNChannel):
     https://ecse.monash.edu/staff/eviterbo/polarcodes.html
 
     """
-    def __init__(self, snr_db, K, N):
+    def __init__(self, snr_db, K, N, noise_power=2.0):
         self.snr_db = snr_db
-        self.noise_power = 2.0
+        self.noise_power = noise_power
         self.symbol_energy = self._compute_symbol_energy(snr_db, K, N)
 
     def _compute_symbol_energy(self, snr_db, K, N):
