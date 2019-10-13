@@ -7,9 +7,9 @@ from polar_codes import FastSSCPolarCode
 
 COLLECTION = 'fast_ssc'
 CODE_RATES = [0.25, 0.33, 0.5, 0.66, 0.75, ]
-SNR_RANGE = [i/2 for i in range(11)]
+SNR_RANGE = [i/2 for i in range(2, 9)]
 MESSAGES_PER_EXPERIMENT = 1000
-REPETITIONS = 100
+REPETITIONS = 50
 
 
 get_pairs = partial(
