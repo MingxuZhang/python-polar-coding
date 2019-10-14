@@ -6,3 +6,6 @@ numba
 numpy
 pycrc
 pymongo
+
+# Required for using `numba` with CUDA
+scikit-cuda
