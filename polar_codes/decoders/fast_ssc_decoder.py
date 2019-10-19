@@ -38,7 +38,6 @@ class FastSSCNode(Node):
         self._bits = np.zeros(self.N, dtype=np.int8)
 
         self.is_computed = False
-
         self._build_fast_ssc_tree()
 
     @property

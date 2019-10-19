@@ -5,7 +5,7 @@ from anytree import Node, PreOrderIter
 from .sc_decoder import SCDecoder
 
 
-class SCANNode(Node):
+class RCSCANNode(Node):
 
     LEFT = 'left_child'
     RIGHT = 'right_child'
@@ -18,6 +18,9 @@ class SCANNode(Node):
     # REPETITION = 'REPETITION'
     OTHER = 'OTHER'
 
+    # LLR = 100 is high enough to be considered as +∞
+    INFINITY = 100
+
     # FAST_SSC_NODE_TYPES = (ZERO_NODE, ONE_NODE, SINGLE_PARITY_CHECK, REPETITION)  # noqa
     SCAN_NODE_TYPES = (ZERO_NODE, ONE_NODE, )
 
@@ -28,7 +31,7 @@ class SCANNode(Node):
 
     def __init__(self, mask, name=ROOT, **kwargs):
         """A node of Fast SSC decoder."""
-        if name not in SCANNode.NODE_NAMES:
+        if name not in RCSCANNode.NODE_NAMES:
             raise ValueError('Wrong SCAN Node type')
 
         super().__init__(name, **kwargs)
@@ -39,7 +42,6 @@ class SCANNode(Node):
         self._beta = np.zeros(self.N, dtype=np.double)
 
         self.is_computed = False
-
         self._build_scan_tree()
 
     @property
@@ -68,30 +70,25 @@ class SCANNode(Node):
 
     @property
     def is_left(self):
-        return self.name == SCANNode.LEFT
+        return self.name == RCSCANNode.LEFT
 
     @property
     def is_right(self):
-        return self.name == SCANNode.RIGHT
+        return self.name == RCSCANNode.RIGHT
 
     @property
     def is_scan_node(self):
-        return self._node_type in SCANNode.SCAN_NODE_TYPES
+        return self._node_type in RCSCANNode.SCAN_NODE_TYPES
 
-    def _compute_beta_values(self):
+    def compute_beta_values(self):
         """Compute bate values."""
         if not self.is_leaf:
             raise TypeError('Cannot make decision in not a leaf node.')
 
-        if self._node_type == SCANNode.ZERO_NODE:
-            self._beta = np.zeros(self.N, dtype=np.int8)
-        if self._node_type == SCANNode.ONE_NODE:
-            self._beta = self._make_hard_decision(self.alpha)
-
-    @staticmethod
-    @numba.njit
-    def _make_hard_decision(llr):
-        return np.array([l < 0 for l in llr], dtype=np.int8)
+        if self._node_type == RCSCANNode.ZERO_NODE:
+            self._beta = self._compute_zero_node_beta(self.alpha)
+        if self._node_type == RCSCANNode.ONE_NODE:
+            self._beta = self._compute_one_node_beta(self.alpha)
 
     def _get_node_type(self):
         """Get the type of Fast SSC Node.
@@ -103,10 +100,10 @@ class SCANNode(Node):
 
         """
         if np.all(self._mask == 0):
-            return SCANNode.ZERO_NODE
+            return RCSCANNode.ZERO_NODE
         if np.all(self._mask == 1):
-            return SCANNode.ONE_NODE
-        return SCANNode.OTHER
+            return RCSCANNode.ONE_NODE
+        return RCSCANNode.OTHER
 
     def _build_scan_tree(self):
         """Build Fast SSC tree."""
@@ -114,5 +111,25 @@ class SCANNode(Node):
             return
 
         left_mask, right_mask = np.split(self._mask, 2)
-        SCANNode(mask=left_mask, name=SCANNode.LEFT, parent=self)
-        SCANNode(mask=right_mask, name=SCANNode.RIGHT, parent=self)
+        RCSCANNode(mask=left_mask, name=RCSCANNode.LEFT, parent=self)
+        RCSCANNode(mask=right_mask, name=RCSCANNode.RIGHT, parent=self)
+
+    @staticmethod
+    @numba.jit
+    def _compute_zero_node_beta(llr):
+        """Compute beta values for ZERO node.
+
+        https://arxiv.org/pdf/1510.06495.pdf Section III.C.
+
+        """
+        return np.ones(llr.size, dtype=np.double) * RCSCANNode.INFINITY
+
+    @staticmethod
+    @numba.jit
+    def _compute_one_node_beta(llr):
+        """Compute beta values for ONE node.
+
+        https://arxiv.org/pdf/1510.06495.pdf Section III.C.
+
+        """
+        return np.zeros(llr.size, dtype=np.double)
