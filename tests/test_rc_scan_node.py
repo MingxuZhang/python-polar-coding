@@ -5,7 +5,7 @@ import numpy as np
 from polar_codes.decoders.rc_scan_decoder import RCSCANNode
 
 
-class FastSSCNodeTest(TestCase):
+class RCSCANNodeTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -16,7 +16,7 @@ class FastSSCNodeTest(TestCase):
         self.assertEqual(node._node_type, RCSCANNode.ZERO_NODE)
 
         node.llr = self.llr
-        node.compute_beta_values()
+        node.compute_leaf_beta()
         np.testing.assert_equal(
             node.beta,
             np.ones(4) * RCSCANNode.INFINITY,
@@ -27,7 +27,7 @@ class FastSSCNodeTest(TestCase):
         self.assertEqual(node._node_type, RCSCANNode.ONE_NODE)
 
         node.llr = self.llr
-        node.compute_beta_values()
+        node.compute_leaf_beta()
         np.testing.assert_equal(
             node.beta,
             np.zeros(4)

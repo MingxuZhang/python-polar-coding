@@ -136,7 +136,7 @@ class TestSCDecoder(TestCase):
 
         # Check intermediate LLRs computation
         expected_llr = self.expected_llrs[position]
-        self.decoder.compute_intermediate_llr(position)
+        self.decoder.compute_intermediate_alpha(position)
         for i in range(self.decoder.n + 1):
             np.testing.assert_array_almost_equal(
                 self.decoder.intermediate_llr[i],
@@ -144,12 +144,12 @@ class TestSCDecoder(TestCase):
             )
 
         # Check decoding result
-        self.decoder.make_decision(position)
+        self.decoder.compute_beta(position)
         decoded = self.decoder._current_decision
         self.assertEqual(decoded, self.expected_decoded[position])
 
         # Check intermediate bits computation
-        self.decoder.compute_intermediate_bits(decoded, position)
+        self.decoder.compute_intermediate_beta(decoded, position)
         expected_bits = self.expected_bits[position]
         for i in range(self.decoder.n + 1):
             np.testing.assert_array_almost_equal(
