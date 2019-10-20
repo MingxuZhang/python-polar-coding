@@ -1,87 +1,16 @@
 import numba
 import numpy as np
-from anytree import Node, PreOrderIter
 
-from .sc_decoder import SCDecoder
+from ..base.functions import function_1, function_2
+from .fast_ssc_decoder import FastSSCDecoder, FastSSCNode
 
 
-class RCSCANNode(Node):
-
-    LEFT = 'left_child'
-    RIGHT = 'right_child'
-    ROOT = 'root'
-    NODE_NAMES = (LEFT, RIGHT, ROOT)
-
-    ZERO_NODE = 'ZERO'
-    ONE_NODE = 'ONE'
-    # SINGLE_PARITY_CHECK = 'SINGLE_PARITY_CHECK'
-    # REPETITION = 'REPETITION'
-    OTHER = 'OTHER'
+class RCSCANNode(FastSSCNode):
 
     # LLR = 100 is high enough to be considered as +∞
     INFINITY = 100
 
-    # FAST_SSC_NODE_TYPES = (ZERO_NODE, ONE_NODE, SINGLE_PARITY_CHECK, REPETITION)  # noqa
-    SCAN_NODE_TYPES = (ZERO_NODE, ONE_NODE, )
-
-    # # Minimal size of Single parity check node
-    # SPC_MIN_SIZE = 4
-    # # Minimal size of Repetition Fast SSC Node
-    # REPETITION_MIN_SIZE = 2
-
-    def __init__(self, mask, name=ROOT, **kwargs):
-        """A node of Fast SSC decoder."""
-        if name not in RCSCANNode.NODE_NAMES:
-            raise ValueError('Wrong SCAN Node type')
-
-        super().__init__(name, **kwargs)
-
-        self._mask = mask
-        self._node_type = self._get_node_type()
-        self._alpha = np.zeros(self.N, dtype=np.double)
-        self._beta = np.zeros(self.N, dtype=np.double)
-
-        self.is_computed = False
-        self._build_scan_tree()
-
-    @property
-    def N(self):
-        return self._mask.size
-
-    @property
-    def alpha(self):
-        return self._alpha
-
-    @alpha.setter
-    def alpha(self, value):
-        if self._mask.size != value.size:
-            raise ValueError('Wrong size of LLR vector')
-        self._alpha = np.array(value)
-
-    @property
-    def beta(self):
-        return self._beta
-
-    @beta.setter
-    def beta(self, value):
-        if self._mask.size != value.size:
-            raise ValueError('Wrong size of Bits vector')
-        self._beta = np.array(value)
-
-    @property
-    def is_left(self):
-        return self.name == RCSCANNode.LEFT
-
-    @property
-    def is_right(self):
-        return self.name == RCSCANNode.RIGHT
-
-    @property
-    def is_scan_node(self):
-        return self._node_type in RCSCANNode.SCAN_NODE_TYPES
-
-    def compute_beta_values(self):
-        """Compute bate values."""
+    def compute_leaf_beta(self):
         if not self.is_leaf:
             raise TypeError('Cannot make decision in not a leaf node.')
 
@@ -91,7 +20,7 @@ class RCSCANNode(Node):
             self._beta = self._compute_one_node_beta(self.alpha)
 
     def _get_node_type(self):
-        """Get the type of Fast SSC Node.
+        """Get the type of RC SCAN Node.
 
         * Zero node - [0, 0, 0, 0, 0, 0, 0, 0];
         * One node - [1, 1, 1, 1, 1, 1, 1, 1];
@@ -105,17 +34,8 @@ class RCSCANNode(Node):
             return RCSCANNode.ONE_NODE
         return RCSCANNode.OTHER
 
-    def _build_scan_tree(self):
-        """Build Fast SSC tree."""
-        if self.is_scan_node:
-            return
-
-        left_mask, right_mask = np.split(self._mask, 2)
-        RCSCANNode(mask=left_mask, name=RCSCANNode.LEFT, parent=self)
-        RCSCANNode(mask=right_mask, name=RCSCANNode.RIGHT, parent=self)
-
     @staticmethod
-    @numba.jit
+    @numba.njit
     def _compute_zero_node_beta(llr):
         """Compute beta values for ZERO node.
 
@@ -125,7 +45,7 @@ class RCSCANNode(Node):
         return np.ones(llr.size, dtype=np.double) * RCSCANNode.INFINITY
 
     @staticmethod
-    @numba.jit
+    @numba.njit
     def _compute_one_node_beta(llr):
         """Compute beta values for ONE node.
 
@@ -133,3 +53,51 @@ class RCSCANNode(Node):
 
         """
         return np.zeros(llr.size, dtype=np.double)
+
+
+class RCSCANDecoder(FastSSCDecoder):
+    """Implements Reduced-complexity SCAN decoding algorithm.
+
+    Based on:
+        * https://arxiv.org/pdf/1510.06495.pdf
+        * doi:10.1007/s12243-018-0634-7
+
+    """
+    node_class = RCSCANNode
+
+    def compute_intermediate_beta(self, node):
+        """Compute intermediate BIT values."""
+        if node.is_left:
+            return
+
+        if node.is_root:
+            return
+
+        parent = node.parent
+        left = node.siblings[0]
+        parent.beta = self.compute_parent_beta(left.beta, node.beta, parent.alpha)  # noqa
+        return self.compute_intermediate_beta(parent)
+
+    @staticmethod
+    def compute_left_alpha(llr):
+        """Compute LLR for left node."""
+        N = llr.size // 2
+        left_alpha = llr[:N]
+        right_alpha = llr[N:]
+        return function_1(left_alpha, right_alpha, np.zeros(N))
+
+    @staticmethod
+    def compute_right_alpha(parent_alpha, left_beta):
+        """Compute LLR for right node."""
+        left_parent_alpha = parent_alpha[: parent_alpha.size // 2]
+        right_parent_alpha = parent_alpha[parent_alpha.size // 2:]
+        return function_2(left_beta, left_parent_alpha, right_parent_alpha)
+
+    @staticmethod
+    def compute_parent_beta(left_beta, right_beta, parent_alpha):
+        """Compute bits of a parent Node."""
+        left_parent_alpha = parent_alpha[: parent_alpha.size // 2]
+        right_parent_alpha = parent_alpha[parent_alpha.size // 2:]
+        left_parent_beta = function_1(left_beta, right_beta, right_parent_alpha)  # noqa
+        right_parent_beta = function_2(left_beta, right_beta, left_parent_alpha)  # noqa
+        return np.append(left_parent_beta, right_parent_beta)
