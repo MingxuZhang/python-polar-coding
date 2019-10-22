@@ -138,8 +138,8 @@ class FastSSCNode(Node):
             return
 
         left_mask, right_mask = np.split(self._mask, 2)
-        FastSSCNode(mask=left_mask, name=FastSSCNode.LEFT, parent=self)
-        FastSSCNode(mask=right_mask, name=FastSSCNode.RIGHT, parent=self)
+        self.__class__(mask=left_mask, name=self.LEFT, parent=self)
+        self.__class__(mask=right_mask, name=self.RIGHT, parent=self)
 
 
 class FastSSCDecoder(SCDecoder):
@@ -215,10 +215,8 @@ class FastSSCDecoder(SCDecoder):
         self._position += leaf_size
 
     @staticmethod
-    # @numba.njit
     def compute_parent_beta(left, right):
         """Compute Beta (BITS) of a parent Node."""
         N = left.size
-        parent_beta = np.zeros(N * 2)
         # append - njit incompatible
         return np.append((left + right) % 2, right)

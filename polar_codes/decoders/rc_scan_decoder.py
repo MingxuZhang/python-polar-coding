@@ -1,14 +1,15 @@
 import numba
 import numpy as np
 
-from ..base.functions import function_1, function_2
+from ..base.functions import function_1 as fun1
+from ..base.functions import function_2 as fun2
 from .fast_ssc_decoder import FastSSCDecoder, FastSSCNode
+
+# LLR = 100 is high enough to be considered as +∞ for RC-SCAN decoding
+INFINITY = 100
 
 
 class RCSCANNode(FastSSCNode):
-
-    # LLR = 100 is high enough to be considered as +∞
-    INFINITY = 100
 
     def compute_leaf_beta(self):
         if not self.is_leaf:
@@ -42,7 +43,7 @@ class RCSCANNode(FastSSCNode):
         https://arxiv.org/pdf/1510.06495.pdf Section III.C.
 
         """
-        return np.ones(llr.size, dtype=np.double) * RCSCANNode.INFINITY
+        return np.ones(llr.size, dtype=np.double) * INFINITY
 
     @staticmethod
     @numba.njit
@@ -82,22 +83,39 @@ class RCSCANDecoder(FastSSCDecoder):
     def compute_left_alpha(llr):
         """Compute LLR for left node."""
         N = llr.size // 2
-        left_alpha = llr[:N]
-        right_alpha = llr[N:]
-        return function_1(left_alpha, right_alpha, np.zeros(N))
+        left_parent_alpha = llr[:N]
+        right_parent_alpha = llr[N:]
+
+        left_alpha = np.zeros(N)
+        for i in range(N):
+            left_alpha[i] = fun1(left_parent_alpha[i], right_parent_alpha[i], 0)  # noqa
+        return left_alpha
 
     @staticmethod
     def compute_right_alpha(parent_alpha, left_beta):
         """Compute LLR for right node."""
-        left_parent_alpha = parent_alpha[: parent_alpha.size // 2]
-        right_parent_alpha = parent_alpha[parent_alpha.size // 2:]
-        return function_2(left_beta, left_parent_alpha, right_parent_alpha)
+        N = parent_alpha.size // 2
+        left_parent_alpha = parent_alpha[:N]
+        right_parent_alpha = parent_alpha[N:]
+
+        right_alpha = np.zeros(N)
+        for i in range(N):
+            right_alpha[i] = fun2(left_beta[i], left_parent_alpha[i], right_parent_alpha[i])  # noqa
+        return right_alpha
 
     @staticmethod
     def compute_parent_beta(left_beta, right_beta, parent_alpha):
         """Compute bits of a parent Node."""
-        left_parent_alpha = parent_alpha[: parent_alpha.size // 2]
-        right_parent_alpha = parent_alpha[parent_alpha.size // 2:]
-        left_parent_beta = function_1(left_beta, right_beta, right_parent_alpha)  # noqa
-        right_parent_beta = function_2(left_beta, right_beta, left_parent_alpha)  # noqa
+        N = parent_alpha.size // 2
+        left_parent_alpha = parent_alpha[:N]
+        right_parent_alpha = parent_alpha[N:]
+
+        left_parent_beta = np.zeros(N)
+        for i in range(N):
+            left_parent_beta[i] = fun1(left_beta[i], right_beta[i], right_parent_alpha[i])  # noqa
+
+        right_parent_beta = np.zeros(N)
+        for i in range(N):
+            right_parent_beta[i] = fun2(left_beta[i], right_beta[i], left_parent_alpha[i])  # noqa
+
         return np.append(left_parent_beta, right_parent_beta)
