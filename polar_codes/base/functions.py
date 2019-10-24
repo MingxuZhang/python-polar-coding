@@ -43,3 +43,9 @@ def function_2(a, b, c):
 
     """
     return basic_llr_computation(a, b) + c
+
+
+@numba.njit
+def make_hard_decision(soft_input):
+    """Makes hard decision based on soft input values (LLR)."""
+    return np.array([s < 0 for s in soft_input], dtype=np.int8)

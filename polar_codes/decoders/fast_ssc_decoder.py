@@ -1,7 +1,7 @@
 import numba
 import numpy as np
 from anytree import Node, PreOrderIter
-
+from ..base.functions import make_hard_decision
 from .sc_decoder import SCDecoder
 
 
@@ -83,16 +83,11 @@ class FastSSCNode(Node):
         if self._node_type == FastSSCNode.ZERO_NODE:
             self._beta = np.zeros(self.N, dtype=np.int8)
         if self._node_type == FastSSCNode.ONE_NODE:
-            self._beta = self._make_hard_decision(self.alpha)
+            self._beta = make_hard_decision(self.alpha)
         if self._node_type == FastSSCNode.SINGLE_PARITY_CHECK:
             self._beta = self._compute_bits_spc(self.alpha)
         if self._node_type == FastSSCNode.REPETITION:
             self._beta = self._compute_bits_repetition(self.alpha)
-
-    @staticmethod
-    @numba.njit
-    def _make_hard_decision(llr):
-        return np.array([l < 0 for l in llr], dtype=np.int8)
 
     @staticmethod
     @numba.njit
@@ -106,8 +101,10 @@ class FastSSCNode(Node):
     @staticmethod
     @numba.njit
     def _compute_bits_repetition(llr):
-        return (np.zeros(llr.size, dtype=np.int8)
-                if np.sum(llr) >= 0 else np.ones(llr.size, dtype=np.int8))
+        return (
+            np.zeros(llr.size, dtype=np.int8) if np.sum(llr) >= 0
+            else np.ones(llr.size, dtype=np.int8)
+        )
 
     def _get_node_type(self):
         """Get the type of Fast SSC Node.
@@ -168,7 +165,7 @@ class FastSSCDecoder(SCDecoder):
         for leaf in self._decoding_tree.leaves:
             self.set_decoder_state(self._position)
             self.compute_intermediate_alpha(leaf)
-            self.compute_leaf_beta(leaf)
+            leaf.compute_leaf_beta()
             self.compute_intermediate_beta(leaf)
             self.set_next_state(leaf.N)
 
@@ -193,10 +190,6 @@ class FastSSCDecoder(SCDecoder):
             left_beta = left_node.beta
             node.alpha = self.compute_right_alpha(parent_alpha, left_beta)
             node.is_computed = True
-
-    def compute_leaf_beta(self, leaf):
-        """Make decision about current decoding value."""
-        leaf.compute_leaf_beta()
 
     def compute_intermediate_beta(self, node):
         """Compute intermediate Beta values (BIT)."""
