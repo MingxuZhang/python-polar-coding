@@ -1,6 +1,7 @@
 import numba
 import numpy as np
 from anytree import Node, PreOrderIter
+
 from ..base.functions import make_hard_decision
 from .sc_decoder import SCDecoder
 

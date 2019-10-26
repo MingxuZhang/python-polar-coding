@@ -1,6 +1,6 @@
 from .base import BasicPolarCode
-from .decoders.rc_scan_decoder import RCSCANDecoder
 from .base.functions import make_hard_decision
+from .decoders.rc_scan_decoder import RCSCANDecoder
 
 
 class RCSCANPolarCode(BasicPolarCode):

@@ -180,7 +180,7 @@ class TestFastSSCDecoder(TestCase):
             np.array([2.9912, ]),
             np.array([-2.3952, -1.3818, 4.7891, -6.4949, ]),
         ]
-        np.array([-0.2514, -0.7778, -3.8001, -1.1468, -2.1438, -0.604, 0.989, -5.3481, ])
+
         expected_bits = [
             np.array([1, 0, ], dtype=np.int8),
             np.array([0, 0, ], dtype=np.int8),
@@ -199,6 +199,6 @@ class TestFastSSCDecoder(TestCase):
         # Check result
         np.testing.assert_equal(
             decoder.result,
-            np.array([1, 1, 0, 0, 0, 1, 1, 0,
-                      1, 0, 1, 1, 1, 0, 0, 1, ], dtype=np.int8)
+            np.array([1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, ],
+                     dtype=np.int8)
         )
