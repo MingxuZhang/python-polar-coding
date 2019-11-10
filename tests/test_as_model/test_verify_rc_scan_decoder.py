@@ -4,8 +4,18 @@ from .sc import VerifySystematicSCCode
 
 
 class VerifyRCSCANCode(VerifySystematicSCCode):
-    messages = 10000
+    messages = 100
     codec_class = RCSCANPolarCode
+
+    @classmethod
+    def _get_filename(cls):
+        N = cls.code_parameters['codeword_length']
+        K = cls.code_parameters['info_length']
+        I = cls.code_parameters['iterations']
+        filename = f'{N}_{K}_I_{I}'
+        if cls.code_parameters.get('is_crc_aided'):
+            filename += '_crc'
+        return f'{filename}.json'
 
 
 class TestSystematicCode_1024_512_iter_1(VerifyRCSCANCode):

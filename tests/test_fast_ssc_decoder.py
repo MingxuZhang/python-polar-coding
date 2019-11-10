@@ -81,11 +81,11 @@ class TestFastSSCDecoder(TestCase):
         exp_left_llrs = np.array([-0.0506, 0.0552, -0.1087, -1.6463, ])
         exp_left_bits = np.array([1, 1, 1, 1, ])
         np.testing.assert_array_almost_equal(
-            decoder._decoding_tree.leaves[0]._llr,
+            decoder._decoding_tree.leaves[0].alpha,
             exp_left_llrs
         )
         np.testing.assert_equal(
-            decoder._decoding_tree.leaves[0]._bits,
+            decoder._decoding_tree.leaves[0].beta,
             exp_left_bits
         )
 
@@ -93,11 +93,11 @@ class TestFastSSCDecoder(TestCase):
         exp_right_llrs = np.array([2.7779, 8.6775, -1.6391, -3.7696, ])
         exp_right_bits = np.array([0, 0, 1, 1, ])
         np.testing.assert_array_almost_equal(
-            decoder._decoding_tree.leaves[1]._llr,
+            decoder._decoding_tree.leaves[1].alpha,
             exp_right_llrs
         )
         np.testing.assert_equal(
-            decoder._decoding_tree.leaves[1]._bits,
+            decoder._decoding_tree.leaves[1].beta,
             exp_right_bits
         )
 
@@ -118,11 +118,11 @@ class TestFastSSCDecoder(TestCase):
         exp_left_llrs = np.array([-0.0506, 0.0552, -0.1087, -1.6463, ])
         exp_left_bits = np.array([0, 0, 1, 1, ])
         np.testing.assert_array_almost_equal(
-            decoder._decoding_tree.leaves[0]._llr,
+            decoder._decoding_tree.leaves[0].alpha,
             exp_left_llrs
         )
         np.testing.assert_equal(
-            decoder._decoding_tree.leaves[0]._bits,
+            decoder._decoding_tree.leaves[0].beta,
             exp_left_bits
         )
 
@@ -130,11 +130,11 @@ class TestFastSSCDecoder(TestCase):
         exp_right_llrs = np.array([-2.6767, -8.7879, -1.6391, -3.7696, ])
         exp_right_bits = np.array([1, 1, 1, 1, ])
         np.testing.assert_array_almost_equal(
-            decoder._decoding_tree.leaves[1]._llr,
+            decoder._decoding_tree.leaves[1].alpha,
             exp_right_llrs
         )
         np.testing.assert_equal(
-            decoder._decoding_tree.leaves[1]._bits,
+            decoder._decoding_tree.leaves[1].beta,
             exp_right_bits
         )
 
@@ -193,8 +193,8 @@ class TestFastSSCDecoder(TestCase):
         ]
 
         for i, leaf in enumerate(decoder._decoding_tree.leaves):
-            np.testing.assert_almost_equal(leaf._llr, expected_llr[i])
-            np.testing.assert_equal(leaf._bits, expected_bits[i])
+            np.testing.assert_almost_equal(leaf.alpha, expected_llr[i])
+            np.testing.assert_equal(leaf.beta, expected_bits[i])
 
         # Check result
         np.testing.assert_equal(

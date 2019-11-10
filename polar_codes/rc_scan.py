@@ -20,19 +20,17 @@ class RCSCANPolarCode(BasicPolarCode):
 
     def _rc_scan_decode(self, llr_estimated_message):
         """RC SCAN decoding."""
-        llr_message = llr_estimated_message
 
         for i in range(self._iterations):
-            self.decoder.initialize(llr_message)
+            self.decoder.initialize(llr_estimated_message)
             self.decoder()
-            llr_message = self.decoder.result
 
             if not self.is_crc_aided:
                 continue
 
             # Validate the result using CRC
-            hard_decision = self._extract(make_hard_decision(llr_message))
-            if self._check_crc(hard_decision):
-                return hard_decision
+            result = self._extract(self.decoder.result)
+            if self._check_crc(result):
+                return result
 
-        return self._extract(make_hard_decision(llr_message))
+        return self._extract(self.decoder.result)

@@ -28,7 +28,7 @@ class FastSSCNode(Node):
 
     def __init__(self, mask, name=ROOT, **kwargs):
         """A node of Fast SSC decoder."""
-        if name not in FastSSCNode.NODE_NAMES:
+        if name not in self.__class__.NODE_NAMES:
             raise ValueError('Wrong Fast SSC Node type')
 
         super().__init__(name, **kwargs)
@@ -67,15 +67,15 @@ class FastSSCNode(Node):
 
     @property
     def is_left(self):
-        return self.name == FastSSCNode.LEFT
+        return self.name == self.__class__.LEFT
 
     @property
     def is_right(self):
-        return self.name == FastSSCNode.RIGHT
+        return self.name == self.__class__.RIGHT
 
     @property
     def is_simplified_node(self):
-        return self._node_type in FastSSCNode.SIMPLIFIED_NODE_TYPES
+        return self._node_type in self.__class__.SIMPLIFIED_NODE_TYPES
 
     def compute_leaf_beta(self):
         if not self.is_leaf:
@@ -89,6 +89,10 @@ class FastSSCNode(Node):
             self._beta = self._compute_bits_spc(self.alpha)
         if self._node_type == FastSSCNode.REPETITION:
             self._beta = self._compute_bits_repetition(self.alpha)
+
+    def _initialize_beta(self):
+        """Initialize BETA values on tree building."""
+        return np.zeros(self.N, dtype=np.int8)
 
     @staticmethod
     @numba.njit
@@ -151,10 +155,6 @@ class FastSSCDecoder(SCDecoder):
 
     def initialize(self, received_llr):
         """Initialize decoder with received message."""
-        # Reset the state of the tree before decoding
-        for node in PreOrderIter(self._decoding_tree):
-            node.is_computed = False
-
         self.current_state = np.zeros(self.n, dtype=np.int8)
         self.previous_state = np.ones(self.n, dtype=np.int8)
 
@@ -163,6 +163,10 @@ class FastSSCDecoder(SCDecoder):
         self._decoding_tree.root.alpha = received_llr
 
     def __call__(self, *args, **kwargs):
+        # Reset the state of the tree before decoding
+        for node in PreOrderIter(self._decoding_tree):
+            node.is_computed = False
+
         for leaf in self._decoding_tree.leaves:
             self.set_decoder_state(self._position)
             self.compute_intermediate_alpha(leaf)

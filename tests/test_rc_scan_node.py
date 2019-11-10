@@ -16,7 +16,7 @@ class TestRCSCANNode(TestCase):
         self.assertEqual(node._node_type, RCSCANNode.ZERO_NODE)
 
         node.llr = self.llr
-        node.compute_leaf_beta()
+        node.initialize_leaf_beta()
         np.testing.assert_equal(
             node.beta,
             np.ones(4) * INFINITY,
@@ -27,7 +27,7 @@ class TestRCSCANNode(TestCase):
         self.assertEqual(node._node_type, RCSCANNode.ONE_NODE)
 
         node.llr = self.llr
-        node.compute_leaf_beta()
+        node.initialize_leaf_beta()
         np.testing.assert_equal(
             node.beta,
             np.zeros(4)

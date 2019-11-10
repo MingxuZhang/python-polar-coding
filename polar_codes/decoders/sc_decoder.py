@@ -129,15 +129,12 @@ class SCDecoder:
     def compute_left_alpha(llr):
         """Compute Alpha (LLR) for left node."""
         N = llr.size // 2
-        # left_llr = np.zeros(N, dtype=np.double)
-        # for i in range(N):
-        #     left = llr[i]
-        #     right = llr[i + N]
-        #     left_llr[i] = basic_llr_computation(left, right)
-        # return left_llr
-        left = llr[:N]
-        right = llr[N:]
-        return basic_llr_computation(left, right)
+        left_llr = np.zeros(N, dtype=np.double)
+        for i in range(N):
+            left = llr[i]
+            right = llr[i + N]
+            left_llr[i] = basic_llr_computation(left, right)
+        return left_llr
 
     @staticmethod
     @numba.njit
