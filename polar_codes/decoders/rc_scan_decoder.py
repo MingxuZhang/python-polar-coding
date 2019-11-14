@@ -117,7 +117,7 @@ class RCSCANDecoder(FastSSCDecoder):
     @property
     def result(self):
         if self.is_systematic:
-            return make_hard_decision(self._compute_result_beta())
+            return make_hard_decision(self.root.alpha + self._compute_result_beta())
 
     @staticmethod
     def compute_left_alpha(parent_alpha, beta):
