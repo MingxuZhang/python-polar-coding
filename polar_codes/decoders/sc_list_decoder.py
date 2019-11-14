@@ -125,7 +125,7 @@ class SCListDecoder:
     def initialize(self, received_llr):
         """Initialize paths with received message."""
         for path in self.paths:
-            path.initialize(received_llr)
+            path.set_initial_state(received_llr)
 
     def __call__(self, position, *args, **kwargs):
         """Single step of SC-decoding algorithm to decode one bit."""

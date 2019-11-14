@@ -1,5 +1,4 @@
 from .base import BasicPolarCode
-from .base.functions import make_hard_decision
 from .decoders.rc_scan_decoder import RCSCANDecoder
 
 
@@ -22,7 +21,7 @@ class RCSCANPolarCode(BasicPolarCode):
         """RC SCAN decoding."""
 
         for i in range(self._iterations):
-            self.decoder.initialize(llr_estimated_message)
+            self.decoder.set_initial_state(llr_estimated_message)
             self.decoder()
 
             if not self.is_crc_aided:

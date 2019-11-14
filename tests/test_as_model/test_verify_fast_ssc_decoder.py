@@ -10,6 +10,7 @@ class VerifyFastSSCCode(VerifySystematicSCCode):
 
 
 class TestSystematicSCCode_1024_512(VerifyFastSSCCode):
+    messages = 100
     code_parameters = {
         'codeword_length': 1024,
         'info_length': 512,

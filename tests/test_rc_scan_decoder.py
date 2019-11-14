@@ -24,24 +24,24 @@ class TestRCSCANDecoder(TestCase):
     def test_zero_node_decoder(self):
         mask = np.zeros(self.length, dtype=np.int8)
         decoder = RCSCANDecoder(mask=mask, is_systematic=True)
-        decoder.initialize(self.received_llr)
+        decoder.set_initial_state(self.received_llr)
         decoder()
 
         self.assertEqual(len(decoder._decoding_tree.leaves), 1)
         np.testing.assert_equal(
-            decoder._decoding_tree.root.beta,
+            decoder.root.beta,
             np.ones(self.length, dtype=np.double) * INFINITY
         )
 
     def test_one_node_decoder(self):
         mask = np.ones(self.length, dtype=np.int8)
         decoder = RCSCANDecoder(mask=mask, is_systematic=True)
-        decoder.initialize(self.received_llr)
+        decoder.set_initial_state(self.received_llr)
         decoder()
 
         self.assertEqual(len(decoder._decoding_tree.leaves), 1)
         np.testing.assert_equal(
-            decoder._decoding_tree.root.beta,
+            decoder.root.beta,
             np.zeros(self.length)
         )
 
@@ -62,16 +62,19 @@ class TestRCSCANDecoder(TestCase):
             np.ones(self.length // 2, dtype=np.int8)
         )
         decoder = RCSCANDecoder(mask=mask, is_systematic=True)
-        decoder.initialize(self.received_llr)
+        decoder.set_initial_state(self.received_llr)
         decoder()
 
         self.assertEqual(len(decoder._decoding_tree.leaves), 2)
         np.testing.assert_equal(
-            decoder._decoding_tree.root.beta,
+            decoder.root.beta,
             expected
         )
 
     def test_complex_code(self):
+        # TODO update the data with correct computations after implementing
+        # correct results computation
+        # And use `result` property
         long_msg = np.array([
             2.113,  1.466,  4.842,  2.867,  2.257, -4.791, -2.735,  2.252,
         ])
@@ -88,7 +91,7 @@ class TestRCSCANDecoder(TestCase):
         for i, leaf in enumerate(decoder._decoding_tree.leaves):
             np.testing.assert_equal(leaf._mask, sub_codes[i])
 
-        decoder.initialize(long_msg)
+        decoder.set_initial_state(long_msg)
 
         # Iteration 1
         decoder()
@@ -108,7 +111,7 @@ class TestRCSCANDecoder(TestCase):
 
         # Check result
         np.testing.assert_almost_equal(
-            decoder._decoding_tree.root.beta,
+            decoder.root.beta,
             expected_result_beta
         )
 
@@ -130,6 +133,6 @@ class TestRCSCANDecoder(TestCase):
 
         # Check result
         np.testing.assert_almost_equal(
-            decoder._decoding_tree.root.beta,
+            decoder.root.beta,
             expected_result_beta
         )

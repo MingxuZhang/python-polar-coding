@@ -4,7 +4,7 @@ from .sc import VerifySystematicSCCode
 
 
 class VerifyRCSCANCode(VerifySystematicSCCode):
-    messages = 100
+    messages = 10000
     codec_class = RCSCANPolarCode
 
     @classmethod
@@ -19,6 +19,7 @@ class VerifyRCSCANCode(VerifySystematicSCCode):
 
 
 class TestSystematicCode_1024_512_iter_1(VerifyRCSCANCode):
+    messages = 100
     code_parameters = {
         'codeword_length': 1024,
         'info_length': 512,

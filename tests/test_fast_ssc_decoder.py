@@ -25,7 +25,7 @@ class TestFastSSCDecoder(TestCase):
         decoder = FastSSCDecoder(mask=mask, is_systematic=True)
         self.assertEqual(len(decoder._decoding_tree.leaves), 1)
 
-        decoder.initialize(self.received_llr)
+        decoder.set_initial_state(self.received_llr)
         decoder()
         np.testing.assert_equal(
             decoder.result,
@@ -37,7 +37,7 @@ class TestFastSSCDecoder(TestCase):
         decoder = FastSSCDecoder(mask=mask, is_systematic=True)
         self.assertEqual(len(decoder._decoding_tree.leaves), 1)
 
-        decoder.initialize(self.received_llr)
+        decoder.set_initial_state(self.received_llr)
         decoder()
         np.testing.assert_equal(
             decoder.result,
@@ -49,7 +49,7 @@ class TestFastSSCDecoder(TestCase):
         decoder = FastSSCDecoder(mask=mask, is_systematic=True)
         self.assertEqual(len(decoder._decoding_tree.leaves), 1)
 
-        decoder.initialize(self.received_llr)
+        decoder.set_initial_state(self.received_llr)
         decoder()
         np.testing.assert_equal(
             decoder.result,
@@ -61,7 +61,7 @@ class TestFastSSCDecoder(TestCase):
         decoder = FastSSCDecoder(mask=mask, is_systematic=True)
         self.assertEqual(len(decoder._decoding_tree.leaves), 1)
 
-        decoder.initialize(self.received_llr)
+        decoder.set_initial_state(self.received_llr)
         decoder()
         np.testing.assert_equal(
             decoder.result,
@@ -73,7 +73,7 @@ class TestFastSSCDecoder(TestCase):
         decoder = FastSSCDecoder(mask=mask, is_systematic=True)
         self.assertEqual(len(decoder._decoding_tree.leaves), 2)
 
-        decoder.initialize(self.received_llr)
+        decoder.set_initial_state(self.received_llr)
         decoder()
 
         # Check nodes
@@ -110,7 +110,7 @@ class TestFastSSCDecoder(TestCase):
         decoder = FastSSCDecoder(mask=mask, is_systematic=True)
         self.assertEqual(len(decoder._decoding_tree.leaves), 2)
 
-        decoder.initialize(self.received_llr)
+        decoder.set_initial_state(self.received_llr)
         decoder()
 
         # Check nodes
@@ -166,7 +166,7 @@ class TestFastSSCDecoder(TestCase):
         for i, leaf in enumerate(decoder._decoding_tree.leaves):
             np.testing.assert_equal(leaf._mask, sub_codes[i])
 
-        decoder.initialize(long_msg)
+        decoder.set_initial_state(long_msg)
         decoder()
 
         # Check nodes

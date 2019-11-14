@@ -31,7 +31,7 @@ class SCDecoder:
         self.current_state = np.zeros(self.n, dtype=np.int8)
         self.previous_state = np.ones(self.n, dtype=np.int8)
 
-    def initialize(self, received_llr):
+    def set_initial_state(self, received_llr):
         """Initialize decoder with received message"""
         self.current_state = np.zeros(self.n, dtype=np.int8)
         self.previous_state = np.ones(self.n, dtype=np.int8)

@@ -80,9 +80,9 @@ class RCSCANDecoder(FastSSCDecoder):
     """
     node_class = RCSCANNode
 
-    def initialize(self, received_llr):
+    def set_initial_state(self, received_llr):
         """Additionally initialize BETA values of nodes."""
-        super().initialize(received_llr)
+        super().set_initial_state(received_llr)
 
         for leaf in self._decoding_tree.leaves:
             leaf.initialize_leaf_beta()
@@ -90,41 +90,34 @@ class RCSCANDecoder(FastSSCDecoder):
     def compute_intermediate_alpha(self, leaf):
         """Compute intermediate Alpha values (LLR)."""
         for node in leaf.path[1:]:
-            if node.is_computed:
+            if node.is_computed or not node.children:
                 continue
 
+            node.is_computed = True
             parent_alpha = node.parent.alpha
 
             if node.is_left:
-                node.alpha = self.compute_left_alpha(parent_alpha, node.beta)
-                continue
+                right_beta = node.siblings[0].beta
+                node.alpha = self.compute_left_alpha(parent_alpha, right_beta)
 
-            left_node = node.siblings[0]
-            left_beta = left_node.beta
-            node.alpha = self.compute_right_alpha(parent_alpha, left_beta)
-            node.is_computed = True
+            if node.is_right:
+                left_beta = node.siblings[0].beta
+                node.alpha = self.compute_right_alpha(parent_alpha, left_beta)
 
     def compute_intermediate_beta(self, node):
         """Compute intermediate BETA values."""
-        if node.is_left:
-            return
-
-        if node.is_root:
-            return
-
         parent = node.parent
+        if node.is_left or node.is_root or parent.is_root:
+            return
+
         left = node.siblings[0]
         parent.beta = self.compute_parent_beta(left.beta, node.beta, parent.alpha)  # noqa
         return self.compute_intermediate_beta(parent)
 
     @property
     def result(self):
-        """TODO: implement in the correct way."""
         if self.is_systematic:
-            return make_hard_decision(
-                self._decoding_tree.root.alpha +
-                self._decoding_tree.root.beta
-            )
+            return make_hard_decision(self._compute_result_beta())
 
     @staticmethod
     def compute_left_alpha(parent_alpha, beta):
@@ -164,3 +157,9 @@ class RCSCANDecoder(FastSSCDecoder):
             parent_beta[i + N] = fun2(left_beta[i], right_beta[i], left_parent_alpha[i])  # noqa
 
         return parent_beta
+
+    def _compute_result_beta(self):
+        """Compute result BETA values."""
+        alpha = self.root.alpha
+        left, right = self.root.children
+        return self.compute_parent_beta(left.beta, right.beta, alpha)

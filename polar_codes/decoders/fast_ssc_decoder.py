@@ -153,7 +153,7 @@ class FastSSCDecoder(SCDecoder):
         self._decoding_tree = self.node_class(mask=self.mask)
         self._position = 0
 
-    def initialize(self, received_llr):
+    def set_initial_state(self, received_llr):
         """Initialize decoder with received message."""
         self.current_state = np.zeros(self.n, dtype=np.int8)
         self.previous_state = np.ones(self.n, dtype=np.int8)
@@ -175,9 +175,14 @@ class FastSSCDecoder(SCDecoder):
             self.set_next_state(leaf.N)
 
     @property
+    def root(self):
+        """Returns root node of decoding tree."""
+        return self._decoding_tree.root
+
+    @property
     def result(self):
         if self.is_systematic:
-            return self._decoding_tree.root.beta
+            return self.root.beta
 
     def compute_intermediate_alpha(self, leaf):
         """Compute intermediate Alpha values (LLR)."""
