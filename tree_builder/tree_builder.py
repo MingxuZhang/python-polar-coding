@@ -1,5 +1,5 @@
 from typing import List, Tuple
-
+import random
 import numpy as np
 
 from polar_codes import FastSSCPolarCode
@@ -20,17 +20,47 @@ class FastSSCTreeBuilder:
             dumped_mask=dumped_mask,
             code_min_size=code_min_size,
         )
-        self._code_min_size = code_min_size
         self._fast_ssc_sample_masks: dict = self._get_fast_ssc_minimum_codes()
 
     def __call__(self, *args, **kwargs):
         """Main method that performs tree rebuilding."""
         sub_codes_to_rebuild = self.get_sub_codes_to_rebuild()
 
+        # initial data
+        number_of_sub_codes = len(sub_codes_to_rebuild)
+        K_to_cover = np.sum([np.sum(s['mask']) for s in sub_codes_to_rebuild])
+        mask_samples = self.samples.copy()
+        positions = [s['position'] for s in sub_codes_to_rebuild]
+        overall_metric = np.array([
+            s['metrics'] for s in sub_codes_to_rebuild
+        ]).flatten()
+
+        # Generate initial population
+        initial_population_size = number_of_sub_codes * len(mask_samples) * 10
+
+        combinations = []
+        while True:
+            combination = random.choices(
+                list(mask_samples.keys()), k=number_of_sub_codes)
+
+            if sum(combination) == K_to_cover:
+                combinations.append(combination)
+            if len(combinations) == initial_population_size:
+                break
+
+        for comb in combinations:
+            result_mask = np.array([mask_samples[i] for i in comb]).flatten()
+            comb_metric = np.sum(result_mask * overall_metric)
+
+        # Mutate:
+        # 1. Split into 2 parts. Randomly select sub-code1 and sub-code2. Swap.
+        # 2. Copy combination. Shuffle copy.
+        # 3. Select random value. Make left/right cyclic shift. See np.roll()
+
     @property
-    def M(self):
+    def Ns(self):
         """Minimal size of component polar code."""
-        return self.code.decoder.M
+        return self.code.decoder.Ns
 
     @property
     def samples(self):
@@ -49,17 +79,17 @@ class FastSSCTreeBuilder:
 
     def _get_fast_ssc_minimum_codes(self) -> dict:
         """Get examples of minimal component codes."""
-        repetition = np.zeros(self.M, dtype=np.int8)
+        repetition = np.zeros(self.Ns, dtype=np.int8)
         repetition[-1] = 1
 
-        spc = np.ones(self.M, dtype=np.int8)
+        spc = np.ones(self.Ns, dtype=np.int8)
         spc[0] = 0
 
         result = {
-            0: np.zeros(self.M, dtype=np.int8),
+            0: np.zeros(self.Ns, dtype=np.int8),
             1: repetition,
-            self.M - 1: spc,
-            self.M: np.ones(self.M, dtype=np.int8)
+            self.Ns - 1: spc,
+            self.Ns: np.ones(self.Ns, dtype=np.int8)
         }
         return result
 
@@ -71,7 +101,7 @@ class FastSSCTreeBuilder:
             leaf = l.to_dict()
             leaf.update({
                 'position': i,
-                'metrics': self.code.channel_estimates[itr: itr + l.N].tolist()
+                'metrics': self.code.channel_estimates[itr: itr + l.N]
             })
             sub_codes.append(leaf)
             itr += l.N

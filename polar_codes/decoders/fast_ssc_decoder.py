@@ -100,7 +100,7 @@ class FastSSCNode(Node):
     def to_dict(self):
         return {
             'type': self._node_type,
-            'mask': self._mask.tolist()
+            'mask': self._mask,
         }
 
     def compute_leaf_beta(self):
