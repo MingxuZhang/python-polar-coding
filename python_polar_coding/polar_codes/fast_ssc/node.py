@@ -40,6 +40,9 @@ class FastSSCNode(Node):
         self.is_computed = False
         self._build_decoding_tree()
 
+    def __str__(self):
+        return ''.join([str(m) for m in self._mask])
+
     @property
     def N(self):
         return self._mask.size
